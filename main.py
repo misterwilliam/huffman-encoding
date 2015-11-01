@@ -2,57 +2,108 @@
 
 import heapq
 
+from typing import Any, List, Tuple
+
 
 class Node:
 
-    def __init__(self,
-                 left=None,    # Character
-                 right=None):  # Character
-        if left:
-            self.left = left
-        if right:
-            self.right = right
+    def __init__(self, left: "Node"=None, right: "Node"=None, data: Any=None):
+        self.left = left if left else None
+        self.right = right if right else None
+        self.data = data if data else None
+
+    def hasChildren(self):
+        return self.left is not None or self.right is not None
 
     def __str__(self):
-        left = str(self.left.node) if self.left.node else self.left.symbol
-        right = str(self.right.node) if self.right.node else self.right.symbol
-        return "(" + left + ", " + right + ")"
+        if self.hasChildren():
+            left = str(self.left)
+            right = str(self.right)
+            return "(" + left + ", " + right + ")"
+        else:
+            return str(self.data)
 
 
 class Character:
 
-    def __init__(self, symbol, score, node):
+    def __init__(self, symbol, score):
         self.symbol = symbol
         self.score = score
-        self.node = node
+
+    def __str__(self):
+        return self.symbol
+
+    @staticmethod
+    def MakeMetaCharacter(left: "Character", right: "Character"):
+        return Character(left.symbol + right.symbol, left.score + right.score)
 
 
-def makeTree(characters):
-    heap = [(character.score, character) for character in characters]
+def MakeTree(characters: List[Character]):
+    heap = [
+        (character.score, character, Node(data=character)) for character in characters
+    ]
     heapq.heapify(heap)
     if len(characters) == 0:
         raise Exception
+    return _makeTreeHelper(heap)
 
-    return makeTreeHelper(heap)
 
-
-def makeTreeHelper(heap):
-    # |heap| List<(number, Character)>
+def _makeTreeHelper(heap: List[Tuple[float, Character, Node]]):
     if len(heap) == 1:
-        return Node(left=heapq.heappop(heap)[1])
+        return Node(left=heapq.heappop(heap)[2])
     elif len(heap) == 2:
-        return Node(heapq.heappop(heap)[1], heapq.heappop(heap)[1])
+        return Node(heapq.heappop(heap)[2], heapq.heappop(heap)[2])
     else:
-        metaCharacter = makeMetaCharacter(heapq.heappop(heap)[1], heapq.heappop(heap)[1])
-        heapq.heappush(heap, (metaCharacter.score, metaCharacter))
-        return makeTreeHelper(heap)
+        left = heapq.heappop(heap)
+        right = heapq.heappop(heap)
+        metaCharacter = Character.MakeMetaCharacter(left[1], right[1])
+        heapq.heappush(heap,
+                       (metaCharacter.score,
+                        metaCharacter,
+                        Node(left=left[2], right=right[2], data=metaCharacter)))
+        return _makeTreeHelper(heap)
 
 
-def makeMetaCharacter(left,    # Character
-                      right):  # Character
-    return Character(left.symbol + right.symbol,
-                     left.score + right.score,
-                     Node(left=left, right=right))
+def Encode(message: str, tree: Node):
+    return "".join(EncodeCharFancy(char, tree) for char in message)
+
+
+def EncodeChar(char, tree) -> str:
+    encoding = []
+    if char in tree.left.data.symbol:
+        encoding.append("0")
+        left = tree.left
+        if left.hasChildren():
+            encoding.append(EncodeChar(char, left))
+    else:
+        encoding.append("1")
+        right = tree.right
+        if right.hasChildren():
+            encoding.append(EncodeChar(char, right))
+    return "".join(encoding)
+
+
+def EncodeCharFancy(char, tree) -> str:
+    # Equivalent to EncodeChar, but this does it by using a generic DFS function call
+    def onNode(tree, char):
+        if not tree.hasChildren():
+            return "stop"
+        return "left" if char in tree.left.data.symbol else "right"
+    path = DFS(tree, char, onNode)
+    encoding = []
+    for direction in path:
+        encoding.append("0" if direction == "left" else "1")
+    return "".join(encoding)
+
+
+def DFS(tree, context, onNode) -> List[str]:
+    direction = onNode(tree, context)
+    if direction == "stop":
+        return []
+    elif direction == "left":
+        return ["left"] + DFS(tree.left, context, onNode)
+    else:
+        return ["right"] + DFS(tree.right, context, onNode)
 
 
 data = [
@@ -63,7 +114,14 @@ data = [
     ('e', 0.05)
 ]
 
-characters = [Character(symbol, score, None) for symbol, score in data]
+characters = [Character(symbol, score) for symbol, score in data]
 
-tree = makeTree(characters)
-print(tree)
+tree = MakeTree(characters)
+print("Tree:", tree)
+print("Tree correct?", str(tree) == "((c, (e, d)), (b, a))")
+
+message = "abcde"
+print("Message:", message)
+encoding = Encode(message, tree)
+print("Encoding:", encoding)
+print("Encoding correct?", encoding == "111000011010")

@@ -1,0 +1,12 @@
+{
+	"folders":
+	[
+		{
+			"path": "/Users/william/Workspace/Programming/huffman-encoding"
+		}
+	],
+  "SublimeLinter":
+  {
+    "@python": 3
+  }
+}
