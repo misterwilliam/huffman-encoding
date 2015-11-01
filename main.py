@@ -1,3 +1,5 @@
+# Python 3
+
 import heapq
 
 
@@ -64,4 +66,4 @@ data = [
 characters = [Character(symbol, score, None) for symbol, score in data]
 
 tree = makeTree(characters)
-print tree
+print(tree)
