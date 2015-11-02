@@ -84,26 +84,27 @@ def EncodeChar(char, tree) -> str:
 
 
 def EncodeCharFancy(char, tree) -> str:
-    # Equivalent to EncodeChar, but this does it by using a generic DFS function call
+    # Equivalent to EncodeChar, but this does it by using a generic TreeTraverse function
+    # call
     def onNode(tree, char):
         if not tree.hasChildren():
             return "stop"
         return "left" if char in tree.left.data.symbol else "right"
-    path = DFS(tree, char, onNode)
+    path = TreeTraverse(tree, char, onNode)
     encoding = []
     for direction in path:
         encoding.append("0" if direction == "left" else "1")
     return "".join(encoding)
 
 
-def DFS(tree, context, onNode) -> List[str]:
+def TreeTraverse(tree, context, onNode) -> List[str]:
     direction = onNode(tree, context)
     if direction == "stop":
         return []
     elif direction == "left":
-        return ["left"] + DFS(tree.left, context, onNode)
+        return ["left"] + TreeTraverse(tree.left, context, onNode)
     else:
-        return ["right"] + DFS(tree.right, context, onNode)
+        return ["right"] + TreeTraverse(tree.right, context, onNode)
 
 
 data = [
