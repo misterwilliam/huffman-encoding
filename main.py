@@ -107,6 +107,23 @@ def TreeTraverse(tree, context, onNode) -> List[str]:
         return ["right"] + TreeTraverse(tree.right, context, onNode)
 
 
+def Decode(message: str, tree: Node) -> str:
+    def onNode(tree, context):
+        if not tree.hasChildren():
+            context["decoding"].append(tree.data.symbol)
+            return "stop"
+        char = context["message"].pop(0)
+        if char == "0":
+            return "left"
+        else:
+            return "right"
+    decoding = []
+    message = [c for c in message]
+    while message:
+        TreeTraverse(tree, {"decoding": decoding, "message": message}, onNode)
+    return "".join(decoding)
+
+
 data = [
     ('a', 0.32),
     ('b', 0.25),
@@ -126,3 +143,6 @@ print("Message:", message)
 encoding = Encode(message, tree)
 print("Encoding:", encoding)
 print("Encoding correct?", encoding == "111000011010")
+decoding = Decode(encoding, tree)
+print("Decoding:", decoding)
+print("Decoding correct?", decoding == message)
